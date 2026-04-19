@@ -32,17 +32,16 @@ def extract_features(url):
 uploaded_file = st.file_uploader("Unggah Gambar QR Code (PNG/JPG)", type=["png", "jpg", "jpeg"])
 
 if uploaded_file is not None:
-    # Tampilkan gambar yang diunggah
+    # Tampilkan gambar yang diunggah menggunakan Pillow
     image = Image.open(uploaded_file)
     st.image(image, caption="QR Code yang diunggah", width=250)
     
     # 4. Proses Computer Vision: Membaca isi QR Code
-    # Konversi gambar agar bisa dibaca oleh OpenCV & Pyzbar
-    file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    opencv_image = cv2.imdecode(file_bytes, 1)
-    
     st.write("⏳ Sedang memindai gambar...")
-    decoded_objects = decode(opencv_image)
+    
+    # KUNCI PERBAIKAN: Langsung masukkan variabel 'image' ke dalam pyzbar!
+    # Tidak perlu dikonversi ke OpenCV lagi.
+    decoded_objects = decode(image)
     
     if decoded_objects:
         # Jika QR berhasil dibaca
