@@ -84,14 +84,32 @@ if uploaded_file is not None:
                 
                 st.write("🧠 **Menjalankan analisis Random Forest...**")
                 fitur_ekstrak = extract_features(url_terdeteksi)
-                prediksi = model.predict(fitur_ekstrak)
                 
+                # UPDATE 1: SISTEM WHITELIST (JALUR VIP)
+                # Masukkan domain terpercaya di sini. Jika URL mengandung kata ini, otomatis AMAN.
+                domain_terpercaya = ['upi.edu', 'google.com', 'instagram.com', 'linktr.ee', 'wa.me']
+                is_whitelisted = any(domain in url_terdeteksi.lower() for domain in domain_terpercaya)
+
                 st.markdown("### Hasil Keputusan AI:")
-                if prediksi[0] == 1:
-                    st.error("🚨 BAHAYA: TAUTAN PHISHING TERDETEKSI!")
-                    st.write("Model mengidentifikasi pola anomali leksikal pada URL ini. Jangan kunjungi tautan tersebut.")
+                
+                if is_whitelisted:
+                    st.success("✅ AMAN: Domain Terpercaya (Whitelist Bypass).")
+                    st.write("Sistem mengenali domain ini sebagai entitas yang aman.")
                 else:
-                    st.success("✅ AMAN: TAUTAN BERSIH.")
-                    st.write("Struktur URL tampak normal dan lolos uji keamanan.")
+
+                    # UPDATE 2: THRESHOLD TUNING (PROBABILITAS)
+                    # Menggunakan predict_proba untuk melihat persentase keyakinan AI
+                    probabilitas = model.predict_proba(fitur_ekstrak)[0]
+                    persentase_phishing = probabilitas[1] # Indeks 1 adalah kelas Phishing
+                    
+                    # AI hanya memvonis bahaya JIKA keyakinannya di atas 75%
+                    batas_toleransi = 0.75 
+                    
+                    if persentase_phishing >= batas_toleransi:
+                        st.error(f"🚨 BAHAYA: TAUTAN PHISHING TERDETEKSI! (Keyakinan: {persentase_phishing*100:.1f}%)")
+                        st.write("Model mengidentifikasi pola anomali leksikal tingkat tinggi pada URL ini. Jangan kunjungi tautan tersebut.")
+                    else:
+                        st.success(f"✅ AMAN: TAUTAN BERSIH. (Skor Keamanan: {(1-persentase_phishing)*100:.1f}%)")
+                        st.write("Meskipun struktur URL mungkin memiliki karakter unik, AI menilainya masih dalam batas wajar.")
         else:
             st.error("❌ Gagal membaca QR Code. Pastikan gambar tidak buram atau terpotong.")
