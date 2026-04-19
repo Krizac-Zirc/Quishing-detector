@@ -1,3 +1,6 @@
 streamlit
 scikit-learn
 numpy
+opencv-python-headless
+pyzbar
+Pillow
