@@ -109,7 +109,4 @@ if uploaded_file is not None:
                         st.write("Model mengidentifikasi pola anomali leksikal pada URL ini.")
                     else:
                         st.success(f"✅ AMAN: TAUTAN BERSIH. (Skor Keamanan: {(1-persentase_phishing)*100:.1f}%)")
-                        st.write("Meskipun struktur URL mungkin memiliki karakter unik, AI menilainya masih dalam batas wajar.")
-            else:
-            st.error("❌ Gagal membaca QR Code. Pastikan gambar tidak buram atau terpotong.")
                         
