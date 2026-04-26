@@ -54,7 +54,7 @@ if uploaded_file:
         st.image(img, caption="Preview QR", use_container_width=True)
     
     with col2:
-        decoded_objects = decode(image)
+        decoded_objects = decode(img)
         
         if decoded_objects:
             for obj in decoded_objects:
