@@ -54,29 +54,52 @@ if uploaded_file:
         st.image(img, caption="Preview QR", use_container_width=True)
     
     with col2:
-        decoded = decode(img)
-        if decoded:
-            for obj in decoded:
-                url = obj.data.decode('utf-8')
-                st.success("Tautan Terdeteksi!")
-                st.code(url, language="text")
+        decoded_objects = decode(image)
+        
+        if decoded_objects:
+            for obj in decoded_objects:
+                url_terdeteksi = obj.data.decode('utf-8')
                 
-                # Pelindung Whitelist Institusi
-                whitelist = ['upi.edu', 'siak.upi.edu']
-                is_safe_zone = any(domain in url.lower() for domain in whitelist)
+                st.success("Tautan berhasil diekstrak!")
+                st.code(url_terdeteksi, language="text")
                 
-                if is_safe_zone:
+                # ==========================================
+                # PERBAIKAN 1: SMART WHITELIST 
+                # ==========================================
+                # Kita pisahkan Whitelist menjadi dua level: Institusi & Publik
+                domain_institusi = ['upi.edu', 'siak.upi.edu']
+                domain_publik = ['google.com', 'docs.google.com', 'drive.google.com', 'linktr.ee', 'wa.me', 'instagram.com']
+                
+                url_lower = url_terdeteksi.lower()
+                is_institusi = any(domain in url_lower for domain in domain_institusi)
+                is_publik = any(domain in url_lower for domain in domain_publik)
+
+                st.markdown("### Hasil Keputusan AI:")
+                
+                if is_institusi:
                     st.balloons()
-                    st.success("✅ AMAN: Domain Terpercaya (Institusi).")
+                    st.success("✅ AMAN: Domain Internal Institusi.")
+                    st.write("Sistem mengenali ini sebagai tautan resmi kampus.")
+                elif is_publik:
+                    st.info("ℹ️ AMAN (DENGAN CATATAN): Domain Publik Terpercaya.")
+                    st.write("Domain ini sah, namun sering digunakan oleh pihak ketiga (seperti Google Form/Linktree). Harap tetap berhati-hati jika diminta memasukkan password.")
                 else:
-                    # Prediksi dengan Probabilitas (Threshold 60%)
-                    features = extract_features(url)
-                    prob = model.predict_proba(features)[0][1] # Ambil skor Phishing
+                    # ==========================================
+                    # PERBAIKAN 2: THRESHOLD DIKEMBALIKAN KE 80%
+                    # ==========================================
+                    st.write("🧠 **Menjalankan analisis Random Forest...**")
+                    fitur_ekstrak = extract_features(url_terdeteksi)
+                    probabilitas = model.predict_proba(fitur_ekstrak)[0]
+                    persentase_phishing = probabilitas[1] 
                     
-                    st.markdown("### Analisis Kecerdasan Buatan:")
-                    if prob >= 0.60:
-                        st.error(f"🚨 BAHAYA: TERDETEKSI PHISHING! (Skor Ancaman: {prob*100:.1f}%)")
+                    # Naikkan batas toleransi menjadi 80%
+                    batas_toleransi = 0.80 
+                    
+                    if persentase_phishing >= batas_toleransi:
+                        st.error(f"🚨 BAHAYA: TAUTAN PHISHING TERDETEKSI! (Skor Ancaman: {persentase_phishing*100:.1f}%)")
+                        st.write("Model mengidentifikasi pola anomali leksikal tingkat tinggi. JANGAN kunjungi tautan tersebut.")
                     else:
-                        st.success(f"✅ AMAN: TAUTAN BERSIH. (Skor Keamanan: {(1-prob)*100:.1f}%)")
+                        st.success(f"✅ AMAN: TAUTAN BERSIH. (Skor Keamanan: {(1-persentase_phishing)*100:.1f}%)")
+                        st.write("Struktur URL ini dinilai aman oleh sistem.")
         else:
-            st.error("❌ Gambar tidak terbaca sebagai QR Code.")
+            st.error("❌ Gagal membaca QR Code. Pastikan gambar tidak buram atau terpotong.")
